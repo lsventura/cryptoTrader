@@ -50,7 +50,7 @@ def execute_trade(signal, cfg):
         
         # 3. Calcula Tamanho (50% da banca para teste)
         percentage = 0.50 
-        usable_balance = free_usdt * percentage
+        usable_balance = free_usdt * percentage # type: ignore
         
         ticker = exchange.fetch_ticker(symbol)
         price = ticker['last']
