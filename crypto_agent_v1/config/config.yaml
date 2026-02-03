@@ -16,3 +16,4 @@ trading:
   risk_per_trade_pct: 1.5
   symbol: BTC/USDT
   timeframe: 15m
+  min_notional: 100
