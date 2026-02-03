@@ -1,0 +1,9 @@
+ccxt
+pandas
+numpy
+ta
+scikit-learn
+lightgbm
+vectorbt
+joblib
+python-dotenv

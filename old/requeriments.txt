@@ -1,0 +1,13 @@
+# --- Requisitos do Projeto de Trading Quantitativo ---
+
+# Aquisição de Dados e Visualização
+yfinance==0.2.38       # Para baixar dados históricos de mercado (OHLCV) do Yahoo Finance
+plotly==5.22.0         # Para a criação de gráficos interativos (usado pelo vectorbt)
+
+# Machine Learning e Modelagem Estatística
+scikit-learn==1.5.0    # Biblioteca principal de machine learning (Scaler, IsolationForest)
+hmmlearn==0.3.2        # Para a implementação do Hidden Markov Model (HMM)
+tensorflow==2.16.1     # Para a construção e treino do modelo de Autoencoder (deep learning)
+
+# Backtesting e Análise de Performance
+vectorbt==0.26.2       # Engine de backtesting de alta performance para a validação da estratégia

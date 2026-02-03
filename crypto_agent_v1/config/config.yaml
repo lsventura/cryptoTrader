@@ -1,0 +1,18 @@
+ai:
+  model: phi3:mini
+  ollama_url: http://localhost:11434
+exchange:
+  api_key: 5r6XWCYt9x8VEnpfWpYiZi0iTcqdEOmoxHdTSViajf6LjRRjjDR95q7rqncKTuTm
+  api_secret: ANZqPlxu8VnrtJ6Qt0ffEA0TAjYjm6W7ytz72UQ414aSmOzV63y7lGo9HJ8IITOl
+  name: binance
+  testnet: true
+strategy:
+  ema_filter: 20
+  rsi_buy: 45
+  rsi_sell: 55
+trading:
+  leverage: 3
+  quantity: 0.002
+  risk_per_trade_pct: 1.5
+  symbol: BTC/USDT
+  timeframe: 15m
