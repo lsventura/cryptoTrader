@@ -62,7 +62,7 @@ def execute_trade(signal, cfg):
         print(f"⚖️ Qtd: {amount:.4f} {symbol}")
 
         # 4. Envia Ordem
-        side = 'buy' if signal == 'BUY' else 'sell'
+        side = 'buy' if signal in ['BUY', 'LONG'] else 'sell'
         print(f"🚀 Enviando ordem {side.upper()}...")
         order = exchange.create_market_order(symbol, side, amount)
         print(f"✅ Ordem executada: {order['id']}")
