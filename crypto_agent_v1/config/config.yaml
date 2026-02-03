@@ -6,14 +6,18 @@ exchange:
   api_secret: ANZqPlxu8VnrtJ6Qt0ffEA0TAjYjm6W7ytz72UQ414aSmOzV63y7lGo9HJ8IITOl
   name: binance
   testnet: true
+risk_management:
+  stop_loss_pct: 0.02
+  trailing_activation_pct: 0.005
+  trailing_callback_rate: 1.0
 strategy:
   ema_filter: 20
-  rsi_buy: 45
-  rsi_sell: 55
+  rsi_buy: 30
+  rsi_sell: 70
 trading:
   leverage: 3
+  min_notional: 100
   quantity: 0.002
   risk_per_trade_pct: 1.5
   symbol: BTC/USDT
   timeframe: 15m
-  min_notional: 100

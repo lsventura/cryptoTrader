@@ -1,5 +1,11 @@
 import ccxt
 import pandas as pd
+import numpy as np
+# Compat shim: some pandas_ta versions expect `numpy.NaN` which is not
+# present in newer numpy releases. Ensure attribute exists before
+# importing pandas_ta so downstream `from numpy import NaN` succeeds.
+if not hasattr(np, "NaN"):
+    np.NaN = np.nan
 import pandas_ta as ta
 
 def get_market_data(cfg):
