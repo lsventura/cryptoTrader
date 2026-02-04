@@ -1,0 +1,1 @@
+{"timestamp": "2026-02-03T23:13:18.979811", "cycle": 1, "sentiment": "BULLISH", "decision": "NEUTRAL", "price": 76440.8, "has_position": true, "pnl": {"usdt": 0.3084000000000087, "pct": 0.13466425633367773, "side": "long", "entry_price": 76338.0, "contracts": 0.003}, "strategy_params": {"rsi_buy": 50, "rsi_sell": 50, "ema_filter": 20}}

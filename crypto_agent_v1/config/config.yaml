@@ -12,8 +12,8 @@ risk_management:
   trailing_callback_rate: 1.0
 strategy:
   ema_filter: 20
-  rsi_buy: 30
-  rsi_sell: 70
+  rsi_buy: 50
+  rsi_sell: 50
 trading:
   leverage: 3
   min_notional: 100

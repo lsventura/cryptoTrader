@@ -168,24 +168,41 @@ def _calculate_amount(cfg, price):
     Se não houver saldo disponível (ou dados insuficientes), retorna None.
     """
     try:
+        if price is None or price <= 0:
+            print(f"⚠️ Preço inválido para cálculo de amount: {price}")
+            return None
+        
         ex = _get_exchange(cfg)
         bal = ex.fetch_balance()
-        free_usdt = bal['USDT']['free']
-    except Exception:
+        free_usdt = bal.get('USDT', {}).get('free', 0)
+        
+        if free_usdt <= 0:
+            print(f"⚠️ Saldo USDT insuficiente: {free_usdt}")
+            return None
+            
+    except Exception as e:
+        print(f"⚠️ Erro ao calcular amount: {e}")
         return None
 
-    risk_pct = float(cfg['trading'].get('risk_per_trade_pct', 1.5)) / 100.0
-    leverage = float(cfg['trading'].get('leverage', 1))
+    try:
+        risk_pct = float(cfg.get('trading', {}).get('risk_per_trade_pct', 1.5)) / 100.0
+        leverage = float(cfg.get('trading', {}).get('leverage', 1))
+        min_notional = float(cfg.get('trading', {}).get('min_notional', 100))
+        
+        # Notional to use
+        notional = free_usdt * risk_pct * leverage
+        if notional < min_notional:
+            # Ajusta para o mínimo em vez de abortar
+            notional = min_notional
 
-    # Notional to use
-    notional = free_usdt * risk_pct * leverage
-    min_notional = float(cfg['trading'].get('min_notional', 100))
-    if notional < min_notional:
-        # Ajusta para o mínimo em vez de abortar
-        notional = min_notional
-
-    amount = notional / price
-    return amount
+        amount = notional / price
+        if amount <= 0:
+            print(f"⚠️ Amount calculado é inválido: {amount}")
+            return None
+        return amount
+    except Exception as e:
+        print(f"⚠️ Erro ao calcular amount (matemática): {e}")
+        return None
 
 
 # Global monitor registry
@@ -413,18 +430,21 @@ def execute_trade_v2(signal_payload, cfg):
         price = float(ticker.get('last') or ticker.get('close') or 0)
 
         if price <= 0:
-            return {'error': 'Preço inválido para cálculo de quantidade.'}
+            return {'error': f'Preço inválido para cálculo de quantidade: {price}'}
 
         amount = _calculate_amount(cfg, price)
         if amount is None or amount <= 0:
-            return {'error': 'Impossível calcular quantidade (saldo/risco insuficiente).'}
+            err = f'Impossível calcular quantidade (saldo/risco insuficiente). Amount={amount}'
+            print(f"⚠️ {err}")
+            return {'error': err}
 
-        notional = amount * price
-        min_notional = float(cfg['trading'].get('min_notional', 100))
+        notional = float(amount) * float(price)
+        min_notional = float(cfg.get('trading', {}).get('min_notional', 100))
         if notional < min_notional:
             # Ajusta a quantidade para atingir o notional mínimo
             amount = min_notional / price
-            notional = amount * price
+            notional = float(amount) * float(price)
+            print(f"📊 Ajustado amount para atingir min_notional: {amount:.6f}")
 
         print(f"🚀 V2 Ordem Market {side.upper()} {amount:.6f} {symbol} (~${notional:.2f})")
 
@@ -432,6 +452,8 @@ def execute_trade_v2(signal_payload, cfg):
         entry = None
         retries = 3
         last_exc = None
+        amount = float(amount)  # Garante conversão
+        
         for attempt in range(retries):
             try:
                 entry = exchange.create_market_order(symbol, side, amount)
@@ -441,9 +463,9 @@ def execute_trade_v2(signal_payload, cfg):
                 err_text = str(e)
                 # Se erro for sobre notional mínimo, tenta aumentar quantidade e re-enviar
                 if 'notional' in err_text.lower() or '4164' in err_text:
-                    min_notional = float(cfg['trading'].get('min_notional', 100))
+                    min_notional = float(cfg.get('trading', {}).get('min_notional', 100))
                     # Ajusta para 50% acima do mínimo para evitar issues de arredondamento
-                    amount = max(amount * 1.25, (min_notional * 1.5) / price)
+                    amount = max(float(amount) * 1.25, (min_notional * 1.5) / price)
                     print(f"⚠️ Ajustando quantidade por notional e tentando novamente (attempt {attempt+1})... Novo amount: {amount:.6f}")
                     time.sleep(1)
                     continue
@@ -496,12 +518,22 @@ def execute_trade_v2(signal_payload, cfg):
 
         # Se qualquer ordem de proteção não foi criada, iniciamos um monitor local de posição
         monitor_id = None
-        if stop_order is None or trailing_order is None:
-            monitor_id, monitor_thread = start_position_monitor(symbol, float(entry.get('price', price)), amount, side, cfg,
-                                                                stop_loss_pct=stop_loss_pct,
-                                                                trailing_activation=trailing_activation,
-                                                                callback_rate=callback_rate)
-            print(f"🕵️ Monitor local iniciado (id={monitor_id})")
+        try:
+            if stop_order is None or trailing_order is None:
+                entry_price = float(entry.get('price', price))
+                amount_for_monitor = float(amount)
+                
+                if entry_price <= 0 or amount_for_monitor <= 0:
+                    print(f"⚠️ Valores inválidos para monitor: entry_price={entry_price}, amount={amount_for_monitor}")
+                else:
+                    monitor_id, monitor_thread = start_position_monitor(symbol, entry_price, amount_for_monitor, side, cfg,
+                                                                        stop_loss_pct=stop_loss_pct,
+                                                                        trailing_activation=trailing_activation,
+                                                                        callback_rate=callback_rate)
+                    print(f"🕵️ Monitor local iniciado (id={monitor_id})")
+        except Exception as monitor_err:
+            print(f"⚠️ Erro ao iniciar monitor local: {monitor_err}")
+            # Continua mesmo se monitor falhar - o trade foi aberto
 
         return {
             'order_id': entry.get('id'),
